@@ -52,21 +52,21 @@ const RegisterUser = async (req, res) => {
         if (studentExist) return res.status(400).json({ error: "Student Already Exist" });
 
         // Get image from user and check
-        const coverBuffer = req.file?.buffer;
-        if (!coverBuffer) {
-            return res.status(400).json({ message: "Cover image is required" });
+        const imageBuffer = req.file?.buffer;
+        if (!imageBuffer) {
+            return res.status(400).json({ message: "image is required" });
         }
 
-        const cover = await uploadOnCloudinary(coverBuffer);
-        if (!cover) {
+        const image = await uploadOnCloudinary(imageBuffer);
+        if (!image) {
             return res.status(400).json({ message: "Failed to upload cover image" });
         }
 
-        console.log("Cover URL:", cover.secure_url);
+        console.log("Image URL:", image.secure_url);
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newStudent = new Student({
-            name, email, password: hashedPassword, phone, skills, working, workingAt, experience, description, yearOfPassing, course, batch, image: cover.secure_url
+            name, email, password: hashedPassword, phone, skills, working, workingAt, experience, description, yearOfPassing, course, batch, image: image.secure_url
         });
         await newStudent.save();
 
