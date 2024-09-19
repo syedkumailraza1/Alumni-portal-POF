@@ -12,6 +12,8 @@ app.get("/", (req, res) => {
 
 // Apply JSON body parser middleware only to specific routes that need it
 app.use('/api/json', express.json());
+
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 app.use(cookieParser())

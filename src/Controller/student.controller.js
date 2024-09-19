@@ -1,6 +1,13 @@
 const  Student = require("../Model/Student.model.js");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken") // Ensure jwt is imported
+const { uploadOnCloudinary } = require('../Utility/claudinary.js'); // Ensure the path matches your project structure
+
+const multer = require('multer');
+
+// Set up multer storage (in memory for now)
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 const options = {
     httpOnly: true,
@@ -24,10 +31,12 @@ const generateTokens = async (studentId) => {
     }
 };
 
+
 const RegisterUser = async (req, res) => {
     try {
+        // Extract text data and file data
         const { name, email, password, phone, skills, working, workingAt, experience, description, yearOfPassing, course, batch } = req.body;
-        console.log(req.body);
+        console.log(req.body); // This will now be filled when form-data is used
 
         if (!name) return res.status(400).json({ error: "FullName is Required" });
         if (!email) return res.status(400).json({ error: "Email is Required" });
@@ -42,8 +51,23 @@ const RegisterUser = async (req, res) => {
         const studentExist = await Student.findOne({ email });
         if (studentExist) return res.status(400).json({ error: "Student Already Exist" });
 
+        // Get image from user and check
+        const coverBuffer = req.file?.buffer;
+        if (!coverBuffer) {
+            return res.status(400).json({ message: "Cover image is required" });
+        }
+
+        const cover = await uploadOnCloudinary(coverBuffer);
+        if (!cover) {
+            return res.status(400).json({ message: "Failed to upload cover image" });
+        }
+
+        console.log("Cover URL:", cover.secure_url);
+
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newStudent = new Student({ name, email, password: hashedPassword, phone, skills, working, workingAt, experience, description, yearOfPassing, course, batch });
+        const newStudent = new Student({
+            name, email, password: hashedPassword, phone, skills, working, workingAt, experience, description, yearOfPassing, course, batch, image: cover.secure_url
+        });
         await newStudent.save();
 
         return res.status(201).json({ message: 'Student registered successfully' });
